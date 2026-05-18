@@ -1,0 +1,9 @@
+apiVersion: v2
+name: alignops
+description: A production-ready enterprise Helm chart for deploying the AlignOps Next.js and Fastify stack.
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+maintainers:
+  - name: Deepmind Advanced Agentic Coding
+    email: support@alignops.example.com

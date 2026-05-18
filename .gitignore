@@ -1,0 +1,105 @@
+# ==============================================================================
+# AlignOps Master .gitignore Configuration
+# ==============================================================================
+
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Production and Development Build Outputs
+dist/
+**/dist/
+build/
+**/build/
+out/
+**/out/
+.next/
+**/.next/
+.tsbuildinfo
+**/*.tsbuildinfo
+
+# Local Environment Variables & Secrets
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+**/.env
+**/.env.*.local
+
+# Logs and Diagnostics
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Diagnostic & Test Outputs
+coverage/
+**/coverage/
+.nyc_output/
+.vitest/
+**/.vitest/
+
+# OS-Specific Metadata
+.DS_Store
+.DS_Store?
+Thumbs.db
+ehthumbs.db
+desktop.ini
+$RECYCLE.BIN/
+
+# IDE and Editor Directories
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Packaging and Cache
+.npm/
+.turbo/
+**/turbo/
+.eslintcache
+
+# ==============================================================================
+# Enterprise DevOps & Infrastructure Ignore Policies
+# ==============================================================================
+
+# Terraform & IaC Workspaces
+.terraform/
+**/.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfvars
+*.tfvars.json
+*override.tf
+*override.tf.json
+.terraformrc
+terraform.rc
+
+# Helm & K8s Packaging
+**/charts/
+**/Chart.lock
+*.tgz
+
+# Database Backups & Dumps (Securing Data Leakage)
+**/backups/
+*.sql
+*.sql.gz
+*.sha256
+
+# Telemetry & Security Scanners Caches
+.trivy/
+**/.trivy/
+*trivy-results.sarif
+
+# Local Encryption Keys & TLS Certificates (Strict Zero-Trust Protection)
+*.pem
+*.key
+*.crt
+*.pfx
+*.pub

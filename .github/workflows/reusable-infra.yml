@@ -1,0 +1,52 @@
+name: Reusable Infrastructure CI
+
+on:
+  workflow_call:
+
+jobs:
+  infrastructure-ci:
+    name: Infrastructure Verification
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # ── Terraform Verification ──
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.7.0"
+
+      - name: Terraform Format Check
+        run: terraform -chdir=infrastructure/terraform fmt -check
+
+      - name: Terraform Initialization (Offline/Validation Mode)
+        run: terraform -chdir=infrastructure/terraform init -backend=false
+
+      - name: Terraform Validation
+        run: terraform -chdir=infrastructure/terraform validate
+
+      - name: Scan IaC for Security Vulnerabilities (tfsec)
+        uses: aquasecurity/tfsec-action@v1.0.0
+        with:
+          working_directory: ./infrastructure/terraform
+          additional_args: --soft-fail
+
+      # ── Kubernetes Manifest Verification ──
+      - name: Validate Kubernetes Manifests Syntax
+        run: |
+          python3 -c "import yaml, glob; [yaml.safe_load(open(f)) for f in glob.glob('infrastructure/k8s/*.yaml')]"
+
+      - name: Kubeconform Validation (K8s Schema & API compliance)
+        uses: yannh/kubeconform-action@v0.1.6
+        with:
+          entrypoint: "/kubeconform"
+          args: "-summary -strict -verbose ./infrastructure/k8s/"
+
+      # ── DevSecOps: Policy-As-Code Auditing (Open Policy Agent OPA / Conftest) ──
+      - name: OPA Policy Auditing (Conftest)
+        uses: open-policy-agent/conftest-action@v1
+        with:
+          policy: ./infrastructure/security/policy/
+          files: ./infrastructure/k8s/*.yaml

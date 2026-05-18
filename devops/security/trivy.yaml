@@ -1,0 +1,37 @@
+# ==============================================================================
+# AlignOps Trivy Vulnerability Scanner Profile
+# Description: Configuration parameters for scanning container images.
+# ==============================================================================
+
+# Scan options
+scan:
+  # Types of vulnerabilities to search for
+  vuln-type:
+    - os
+    - library
+  # Directory target to scan
+  target: "."
+
+# Report options
+report:
+  # Format of the output (table | json | sarif)
+  format: table
+  # Output file destination (default: stdout)
+  output: ""
+  # Include only actionable vulnerabilities that have fixed packages
+  ignore-unfixed: true
+  # Severity thresholds to trigger pipeline failure
+  severity:
+    - HIGH
+    - CRITICAL
+
+# Security compliance frameworks to audit against
+compliance:
+  # CIS Benchmarks, Kubernetes NSA, Docker CIS
+  spec: "docker-cis-1.6.0"
+
+# Files or directories to skip during search
+exclude-paths:
+  - "node_modules"
+  - ".next"
+  - "dist"

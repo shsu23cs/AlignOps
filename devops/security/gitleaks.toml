@@ -1,0 +1,57 @@
+# ==============================================================================
+# AlignOps Gitleaks Secrets Scanning Configuration
+# Description: Rules and patterns to detect leaks of API keys, tokens, SSH keys,
+#              and private secrets within the AlignOps code repositories.
+# ==============================================================================
+
+title = "gitleaks config"
+
+[[rules]]
+description = "AWS Manager Access Key ID"
+id = "aws-access-key-id"
+regex = '''(A3T[A-Z0-9]|AKIA|AGPA|AIDA|AROA|AIPA|ANPA|ANVA|ASIA)[A-Z0-9]{16}'''
+tags = ["key", "AWS"]
+
+[[rules]]
+description = "AWS Secret Access Key"
+id = "aws-secret-access-key"
+regex = '''(?i)aws(.{0,20})?(?-i)['"][0-9a-zA-Z\/+]{40}['"]'''
+tags = ["key", "AWS"]
+
+[[rules]]
+description = "Generic SSH Private Key"
+id = "ssh-private-key"
+regex = '''-----BEGIN[ A-Z0-9_-]+PRIVATE KEY-----'''
+tags = ["key", "SSH"]
+
+[[rules]]
+description = "GitHub Personal Access Token"
+id = "github-pat"
+regex = '''ghp_[0-9a-zA-Z]{36}'''
+tags = ["key", "GitHub"]
+
+[[rules]]
+description = "Database Connection URL String"
+id = "db-url"
+regex = '''(?i)(postgres|postgresql|mysql|mongodb|redis):\/\/[a-zA-Z0-9_]+:[a-zA-Z0-9_]+@[a-zA-Z0-9_.-]+:[0-9]+\/[a-zA-Z0-9_.-]+'''
+tags = ["key", "credentials", "database"]
+
+[[rules]]
+description = "Slack Webhook URL"
+id = "slack-webhook"
+regex = '''https:\/\/hooks.slack.com\/services\/T[a-zA-Z0-9_]{8}\/B[a-zA-Z0-9_]{8}\/[a-zA-Z0-9_]{24}'''
+tags = ["key", "Slack"]
+
+[[rules]]
+description = "JWT Token Secret Key Pattern"
+id = "jwt-secret"
+regex = '''(?i)(jwt_secret|jwt-secret|token_secret)(.{0,20})?=[[:space:]]*['"][a-zA-Z0-9_-]{32,}['"]'''
+tags = ["key", "security"]
+
+[allowlist]
+description = "Allow mock data and environment files for development and tests"
+paths = [
+    '''node_modules''',
+    '''frontend/next-env.d.ts''',
+    '''.env.example'''
+]

@@ -1,0 +1,35 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: alignops-ingress
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod" # Automated TLS certificates via ACME/Let's Encrypt
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "15m"
+    nginx.ingress.kubernetes.io/use-regex: "true"
+spec:
+  tls:
+    - hosts:
+        - alignops.yourdomain.com
+      secretName: alignops-tls-secret
+  rules:
+    - host: alignops.yourdomain.com
+      http:
+        paths:
+          # Ingress routing: Route all /api prefix endpoints directly to the backend service
+          - path: /api(/|$)(.*)
+            pathType: Prefix
+            backend:
+              service:
+                name: alignops-backend-service
+                port:
+                  number: 3001
+          # Ingress routing: Route all other web queries directly to the Next.js frontend service
+          - path: /(.*)
+            pathType: Prefix
+            backend:
+              service:
+                name: alignops-frontend-service
+                port:
+                  number: 3000

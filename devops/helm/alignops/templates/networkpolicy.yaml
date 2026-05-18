@@ -1,0 +1,40 @@
+# Database Network Security Policy
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "alignops.fullname" . }}-restrict-postgres
+  labels:
+    {{- include "alignops.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      app: postgres
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: backend
+      ports:
+        - protocol: TCP
+          port: {{ .Values.postgres.service.port }}
+---
+# Frontend Isolation Security Policy
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "alignops.fullname" . }}-frontend-isolation
+  labels:
+    {{- include "alignops.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      app: frontend
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - podSelector:
+            matchExpressions:
+              - {key: app, operator: NotIn, values: [postgres]}

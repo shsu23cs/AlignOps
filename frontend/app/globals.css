@@ -1,0 +1,173 @@
+@import "tailwindcss";
+
+:root {
+  /* Canvas */
+  --color-canvas: #F7F3EC;
+  --color-surface: #FFFFFF;
+  --color-surface-raised: #FDFAF5;
+  --color-surface-sunken: #EEE9DF;
+
+  /* Primary — Deep Forest */
+  --color-primary-900: #111F1A;
+  --color-primary-800: #1A2F26;
+  --color-primary-700: #1F3B30;
+  --color-primary-600: #275040;
+  --color-primary-500: #2E6450;
+  --color-primary-400: #448A6E;
+  --color-primary-300: #6AAD92;
+  --color-primary-200: #A5CFC0;
+  --color-primary-100: #D6EBE4;
+  --color-primary-50: #EEF7F3;
+
+  /* Accent — Warm Amber */
+  --color-accent-900: #5C3300;
+  --color-accent-700: #A05C10;
+  --color-accent-500: #C97D1A;
+  --color-accent-300: #E8B265;
+  --color-accent-100: #F9E8C3;
+  --color-accent-50: #FDF5E3;
+
+  /* Semantic */
+  --color-success: #3A7A52;
+  --color-success-bg: #EAF5EE;
+  --color-warning: #C47A1E;
+  --color-warning-bg: #FEF3DC;
+  --color-danger: #B54030;
+  --color-danger-bg: #FAEAE7;
+  --color-info: #4A6FA5;
+  --color-info-bg: #EAF0FA;
+
+  /* Text */
+  --color-text-primary: #1A1714;
+  --color-text-secondary: #5C5549;
+  --color-text-tertiary: #8C8278;
+  --color-text-disabled: #B8B2AA;
+  --color-text-inverse: #F7F3EC;
+  --color-text-accent: #A05C10;
+
+  /* Border */
+  --color-border-strong: #C8C2B8;
+  --color-border-default: #DDD8CE;
+  --color-border-subtle: #EAE6DF;
+
+  /* Progress / Score rings */
+  --color-score-excellent: #3A7A52;
+  --color-score-good: #6AAD92;
+  --color-score-moderate: #C97D1A;
+  --color-score-low: #B54030;
+
+  /* Spacing scale */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  --space-20: 5rem;
+
+  /* Radius */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 9999px;
+
+  /* Elevation / Shadow */
+  --shadow-sm: 0 1px 2px rgba(26,23,20,0.06), 0 1px 1px rgba(26,23,20,0.04);
+  --shadow-md: 0 4px 8px rgba(26,23,20,0.08), 0 2px 4px rgba(26,23,20,0.05);
+  --shadow-lg: 0 12px 24px rgba(26,23,20,0.10), 0 4px 8px rgba(26,23,20,0.06);
+  --shadow-xl: 0 24px 48px rgba(26,23,20,0.12), 0 8px 16px rgba(26,23,20,0.07);
+
+  /* Layout */
+  --sidebar-width: 240px;
+  --sidebar-collapsed: 64px;
+  --topbar-height: 56px;
+  --content-max-width: 1200px;
+  --panel-padding: var(--space-6);
+
+  /* Typography */
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 1.875rem;
+  --text-4xl: 2.25rem;
+  --text-5xl: 3rem;
+
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+
+  --leading-tight: 1.2;
+  --leading-snug: 1.375;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.625;
+
+  --tracking-tight: -0.02em;
+  --tracking-normal: 0;
+  --tracking-wide: 0.04em;
+  --tracking-widest: 0.1em;
+
+  /* Animation */
+  --ease-standard: cubic-bezier(0.4, 0.0, 0.2, 1);
+  --ease-enter: cubic-bezier(0.0, 0.0, 0.2, 1);
+  --ease-exit: cubic-bezier(0.4, 0.0, 1.0, 1);
+  --duration-fast: 100ms;
+  --duration-base: 200ms;
+  --duration-slow: 350ms;
+}
+
+@theme inline {
+  --font-display: var(--font-display);
+  --font-body: var(--font-body);
+  --font-mono: var(--font-mono);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--color-canvas);
+  color: var(--color-text-primary);
+  font-family: var(--font-body), 'Trebuchet MS', sans-serif;
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin: 0;
+  font-weight: var(--weight-semibold);
+}
+
+p {
+  margin: 0;
+}
+
+button {
+  font-family: inherit;
+}
+
+input, textarea, select {
+  font-family: inherit;
+}
+
+a {
+  color: var(--color-info);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}

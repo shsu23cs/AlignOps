@@ -1,0 +1,29 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: alignops-production
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/your-org/alignops.git'
+    targetRevision: HEAD
+    path: infrastructure/k8s
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: alignops-prod
+  syncPolicy:
+    automated:
+      prune: true        # Automatically delete resources in the cluster that are removed from git
+      selfHeal: true     # Revert manual out-of-band drift modifications in the cluster back to the git state
+    syncOptions:
+      - CreateNamespace=true  # Automatically build namespace if not present
+      - ApplyOutOfSyncOnly=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m

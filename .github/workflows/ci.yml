@@ -1,0 +1,64 @@
+name: Enterprise CI Orchestrator
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Job 1: Path filtering to determine which pipelines to execute
+  changes:
+    name: Analyze Changes
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+      infrastructure: ${{ steps.filter.outputs.infrastructure }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Path Filtering
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            backend:
+              - 'backend/**'
+              - '.github/workflows/reusable-backend.yml'
+              - '.github/workflows/ci.yml'
+            frontend:
+              - 'frontend/**'
+              - '.github/workflows/reusable-frontend.yml'
+              - '.github/workflows/ci.yml'
+            infrastructure:
+              - 'infrastructure/**'
+              - 'devops/**'
+              - '.github/workflows/reusable-infra.yml'
+              - '.github/workflows/ci.yml'
+
+  # Job 2: Backend CI execution
+  backend:
+    name: Backend Pipeline
+    needs: changes
+    if: ${{ needs.changes.outputs.backend == 'true' }}
+    uses: ./.github/workflows/reusable-backend.yml
+
+  # Job 3: Frontend CI execution
+  frontend:
+    name: Frontend Pipeline
+    needs: changes
+    if: ${{ needs.changes.outputs.frontend == 'true' }}
+    uses: ./.github/workflows/reusable-frontend.yml
+
+  # Job 4: Infrastructure CI execution
+  infrastructure:
+    name: Infrastructure Pipeline
+    needs: changes
+    if: ${{ needs.changes.outputs.infrastructure == 'true' }}
+    uses: ./.github/workflows/reusable-infra.yml

@@ -1,0 +1,88 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: alignops-gateway
+  namespace: alignops-prod
+spec:
+  selector:
+    istio: ingressgateway # Utilize Istio default ingress controller
+  servers:
+    - port:
+        number: 80
+        name: http
+        protocol: HTTP
+      hosts:
+        - "alignops.yourdomain.com"
+      tls:
+        httpsRedirect: true # Redirect all plain HTTP traffic to HTTPS
+    - port:
+        number: 443
+        name: https
+        protocol: HTTPS
+      hosts:
+        - "alignops.yourdomain.com"
+      tls:
+        mode: SIMPLE
+        credentialName: alignops-tls-secret # Mount cert-manager TLS certificates
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: alignops-routing
+  namespace: alignops-prod
+spec:
+  hosts:
+    - "alignops.yourdomain.com"
+  gateways:
+    - alignops-gateway
+  http:
+    # Route APIs to Backend with a Canary Release Configuration (90/10 Split)
+    - match:
+        - uri:
+            prefix: /api/v1
+      route:
+        - destination:
+            host: alignops-backend-service
+            subset: v1
+          weight: 90
+        - destination:
+            host: alignops-backend-service
+            subset: v2-canary
+          weight: 10
+          
+    # Route all other traffic to Frontend
+    - match:
+        - uri:
+            prefix: /
+      route:
+        - destination:
+            host: alignops-frontend-service
+            port:
+              number: 3000
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: alignops-destination-policies
+  namespace: alignops-prod
+spec:
+  host: alignops-backend-service
+  trafficPolicy:
+    tls:
+      mode: ISTIO_MUTUAL # Force Strict Mutual TLS (mTLS) for all service mesh pods
+  subsets:
+    - name: v1
+      labels:
+        version: v1.0.0
+    - name: v2-canary
+      labels:
+        version: v2.0.0-rc1
+---
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: strict-mtls
+  namespace: alignops-prod
+spec:
+  mtls:
+    mode: STRICT # Strict peer authentication: enforce encryptions for all pod connections

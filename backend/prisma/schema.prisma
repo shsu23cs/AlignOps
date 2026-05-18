@@ -1,0 +1,274 @@
+// Prisma Schema — AlignOps Goal Setting & Tracking Portal
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Enums
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum Role {
+  EMPLOYEE
+  MANAGER
+  ADMIN
+}
+
+enum CyclePhase {
+  GOAL_SETTING
+  Q1
+  Q2
+  Q3
+  Q4
+}
+
+enum GoalSheetStatus {
+  DRAFT
+  PENDING_APPROVAL
+  APPROVED
+  RETURNED
+}
+
+enum UomType {
+  NUMERIC_MIN
+  NUMERIC_MAX
+  TIMELINE
+  ZERO
+}
+
+enum GoalStatus {
+  NOT_STARTED
+  ON_TRACK
+  COMPLETED
+}
+
+enum AchievementStatus {
+  NOT_STARTED
+  ON_TRACK
+  COMPLETED
+}
+
+enum AuditAction {
+  EDIT
+  UNLOCK
+  APPROVE
+  RETURN
+  SHARE
+  CREATE
+  DELETE
+}
+
+enum AuditEntityType {
+  GOAL
+  GOAL_SHEET
+  ACHIEVEMENT
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Models
+// ─────────────────────────────────────────────────────────────────────────────
+
+model User {
+  id           String   @id @default(uuid())
+  name         String
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  role         Role
+  department   String
+  externalId   String?  @map("external_id") // Bonus: for Entra ID SSO
+
+  // Self-referential manager relationship
+  managerId    String?  @map("manager_id")
+  manager      User?    @relation("UserManager", fields: [managerId], references: [id])
+  directReports User[]  @relation("UserManager")
+
+  // Refresh tokens for JWT rotation
+  refreshTokens RefreshToken[]
+
+  // Owned sheets and approval actions
+  goalSheets   GoalSheet[] @relation("EmployeeGoalSheets")
+  approvedSheets GoalSheet[] @relation("ManagerApprovals")
+  createdCycles Cycle[]
+  checkinComments CheckinComment[]
+  auditLogs    AuditLog[]
+  escalationLogs EscalationLog[]
+
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@index([managerId])
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+model Cycle {
+  id          String     @id @default(uuid())
+  year        Int
+  phase       CyclePhase
+  windowOpen  DateTime   @map("window_open")
+  windowClose DateTime   @map("window_close")
+  isActive    Boolean    @default(false) @map("is_active")
+
+  createdById String @map("created_by")
+  createdBy   User   @relation(fields: [createdById], references: [id])
+
+  goalSheets  GoalSheet[]
+  escalationLogs EscalationLog[]
+
+  @@index([phase, isActive])
+  @@map("cycles")
+}
+
+model GoalSheet {
+  id           String          @id @default(uuid())
+  employeeId   String          @map("employee_id")
+  cycleId      String          @map("cycle_id")
+  status       GoalSheetStatus @default(DRAFT)
+  locked       Boolean         @default(false)
+  submittedAt  DateTime?       @map("submitted_at")
+  approvedAt   DateTime?       @map("approved_at")
+  approvedById String?         @map("approved_by")
+  returnReason String?         @map("return_reason")
+  updatedAt    DateTime        @updatedAt @map("updated_at")
+
+  employee     User    @relation("EmployeeGoalSheets", fields: [employeeId], references: [id])
+  approvedBy   User?   @relation("ManagerApprovals", fields: [approvedById], references: [id])
+  cycle        Cycle   @relation(fields: [cycleId], references: [id])
+
+  goals           Goal[]
+  checkinComments CheckinComment[]
+  auditLogs       AuditLog[]       @relation("GoalSheetAuditLogs")
+
+  @@unique([employeeId, cycleId])
+  @@index([employeeId, cycleId])
+  @@index([cycleId])
+  @@map("goal_sheets")
+}
+
+model Goal {
+  id           String     @id @default(uuid())
+  goalSheetId  String     @map("goal_sheet_id")
+  thrustArea   String     @map("thrust_area")
+  title        String
+  description  String
+  uomType      UomType    @map("uom_type")
+  target       Decimal?   @db.Decimal(12, 4)
+  targetDate   DateTime?  @map("target_date") @db.Date
+  weightage    Decimal    @db.Decimal(5, 2)
+  isShared     Boolean    @default(false) @map("is_shared")
+  sharedFromId String?    @map("shared_from_id")
+  status       GoalStatus @default(NOT_STARTED)
+
+  goalSheet    GoalSheet @relation(fields: [goalSheetId], references: [id], onDelete: Cascade)
+  sharedFrom   Goal?     @relation("SharedGoals", fields: [sharedFromId], references: [id])
+  sharedCopies Goal[]    @relation("SharedGoals")
+
+  achievements Achievement[]
+  auditLogs    AuditLog[]    @relation("GoalAuditLogs")
+
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@index([goalSheetId])
+  @@index([sharedFromId])
+  @@map("goals")
+}
+
+model Achievement {
+  id          String            @id @default(uuid())
+  goalId      String            @map("goal_id")
+  cyclePhase  CyclePhase        @map("cycle_phase")
+  actualValue Decimal?          @map("actual_value") @db.Decimal(12, 4)
+  actualDate  DateTime?         @map("actual_date") @db.Date
+  status      AchievementStatus @default(NOT_STARTED)
+  score       Decimal?          @db.Decimal(5, 4) // 0.0000 to 1.0000
+  updatedAt   DateTime          @updatedAt @map("updated_at")
+
+  goal        Goal @relation(fields: [goalId], references: [id], onDelete: Cascade)
+
+  auditLogs   AuditLog[] @relation("AchievementAuditLogs")
+
+  @@unique([goalId, cyclePhase])
+  @@index([goalId, cyclePhase])
+  @@map("achievements")
+}
+
+model CheckinComment {
+  id          String     @id @default(uuid())
+  goalSheetId String     @map("goal_sheet_id")
+  managerId   String     @map("manager_id")
+  cyclePhase  CyclePhase @map("cycle_phase")
+  comment     String
+  createdAt   DateTime   @default(now()) @map("created_at")
+
+  goalSheet   GoalSheet @relation(fields: [goalSheetId], references: [id], onDelete: Cascade)
+  manager     User      @relation(fields: [managerId], references: [id])
+
+  @@unique([goalSheetId, managerId, cyclePhase])
+  @@index([goalSheetId])
+  @@map("checkin_comments")
+}
+
+model AuditLog {
+  id          String          @id @default(uuid())
+  entityType  AuditEntityType @map("entity_type")
+  entityId    String          @map("entity_id")
+  actorId     String          @map("actor_id")
+  action      AuditAction
+  fieldName   String?         @map("field_name")
+  oldValue    String?         @map("old_value")
+  newValue    String?         @map("new_value")
+  createdAt   DateTime        @default(now()) @map("created_at")
+
+  actor       User       @relation(fields: [actorId], references: [id])
+
+  // Polymorphic back-relations (optional — allows eager loading from entities)
+  goalSheet   GoalSheet? @relation("GoalSheetAuditLogs", fields: [goalSheetId], references: [id])
+  goalSheetId String?    @map("goal_sheet_id")
+
+  goal        Goal?      @relation("GoalAuditLogs", fields: [goalId], references: [id])
+  goalId      String?    @map("goal_id")
+
+  achievement     Achievement? @relation("AchievementAuditLogs", fields: [achievementId], references: [id])
+  achievementId   String?      @map("achievement_id")
+
+  @@index([entityId, entityType])
+  @@index([actorId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+enum EscalationType {
+  MISSED_SUBMISSION
+  UNAPPROVED_SHEET
+  HR_ALERT
+}
+
+model EscalationLog {
+  id        String         @id @default(uuid())
+  type      EscalationType
+  userId    String         @map("user_id")
+  cycleId   String         @map("cycle_id")
+  message   String
+  sentAt    DateTime       @default(now()) @map("sent_at")
+
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cycle     Cycle          @relation(fields: [cycleId], references: [id], onDelete: Cascade)
+
+  @@index([userId, cycleId, type])
+  @@map("escalation_logs")
+}

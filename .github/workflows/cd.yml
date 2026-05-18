@@ -1,0 +1,19 @@
+name: Enterprise CD Orchestrator
+
+on:
+  push:
+    tags:
+      - 'v*'
+    branches:
+      - main
+      - master
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  secure-publish:
+    name: Secure Docker Publish
+    uses: ./.github/workflows/reusable-publish.yml
+    secrets: inherit

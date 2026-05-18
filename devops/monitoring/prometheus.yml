@@ -1,0 +1,42 @@
+# ==============================================================================
+# AlignOps Prometheus Scraper Configurations
+# Description: Rules for polling metrics from the system and applications.
+# ==============================================================================
+
+global:
+  scrape_interval: 15s     # Poll metrics every 15 seconds
+  evaluation_interval: 15s # Evaluate alert rules every 15 seconds
+  external_labels:
+    monitor: 'alignops-monitoring'
+
+# Alerting specifications
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            # - alertmanager:9093
+
+# Scrape jobs definitions
+scrape_configs:
+  # 1. Prometheus Telemetry
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # 2. Node OS Exporter
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+
+  # 3. AlignOps Fastify Backend
+  - job_name: 'alignops-backend'
+    scrape_interval: 5s # High-frequency polling for backend request tracking
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['backend:3001']
+
+  # 4. AlignOps Next.js Frontend
+  - job_name: 'alignops-frontend'
+    metrics_path: '/api/metrics'
+    static_configs:
+      - targets: ['frontend:3000']

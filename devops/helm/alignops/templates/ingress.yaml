@@ -1,0 +1,36 @@
+{{- if .Values.ingress.enabled -}}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "alignops.fullname" . }}-ingress
+  labels:
+    {{- include "alignops.labels" . | nindent 4 }}
+  annotations:
+    kubernetes.io/ingress.class: {{ .Values.ingress.className | quote }}
+    {{- toYaml .Values.ingress.annotations | nindent 4 }}
+spec:
+  {{- if .Values.ingress.tls.enabled }}
+  tls:
+    - hosts:
+        - {{ .Values.global.domain | quote }}
+      secretName: {{ .Values.ingress.tls.secretName | quote }}
+  {{- end }}
+  rules:
+    - host: {{ .Values.global.domain | quote }}
+      http:
+        paths:
+          - path: /api(/|$)(.*)
+            pathType: Prefix
+            backend:
+              service:
+                name: alignops-backend-service
+                port:
+                  number: {{ .Values.backend.service.port }}
+          - path: /(.*)
+            pathType: Prefix
+            backend:
+              service:
+                name: alignops-frontend-service
+                port:
+                  number: {{ .Values.frontend.service.port }}
+{{- end }}

@@ -1,0 +1,96 @@
+# ==============================================================================
+# AlignOps Helm Chart Configurations (values.yaml)
+# Description: Configuration parameters for microservices, ingress, and database.
+# ==============================================================================
+
+# Global parameters
+global:
+  domain: alignops.yourdomain.com
+  environment: production
+
+# Fastify Backend Configurations
+backend:
+  replicaCount: 2
+  image:
+    repository: ghcr.io/your-org/alignops-backend
+    tag: latest
+    pullPolicy: Always
+  service:
+    type: ClusterIP
+    port: 3001
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: 500m
+      memory: 1024Mi
+  hpa:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPU: 75
+    targetMemory: 80
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 10001
+  env:
+    corsOrigin: "https://alignops.yourdomain.com"
+    databaseUrl: "postgresql://postgres:postgres-secure-password@postgres-db:5432/alignops?schema=public"
+    jwtSecret: "enterprise-super-secure-production-jwt-token-secret-key-32-chars-long"
+
+# Next.js Frontend Configurations
+frontend:
+  replicaCount: 2
+  image:
+    repository: ghcr.io/your-org/alignops-frontend
+    tag: latest
+    pullPolicy: Always
+  service:
+    type: ClusterIP
+    port: 3000
+  resources:
+    requests:
+      cpu: 150m
+      memory: 256Mi
+    limits:
+      cpu: 300m
+      memory: 512Mi
+  hpa:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPU: 75
+    targetMemory: 80
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 10001
+  env:
+    nextPublicApiUrl: "https://alignops.yourdomain.com/api/v1"
+
+# PostgreSQL Database Configurations (StatefulSet)
+postgres:
+  image:
+    repository: postgres
+    tag: 15-alpine
+  service:
+    port: 5432
+  storage:
+    size: 10Gi
+    accessMode: ReadWriteOnce
+  dbName: alignops
+  dbUser: postgres
+  dbPassword: "postgres-secure-password"
+
+# Ingress Configurations
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "15m"
+    nginx.ingress.kubernetes.io/use-regex: "true"
+  tls:
+    enabled: true
+    secretName: alignops-tls-secret

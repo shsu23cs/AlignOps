@@ -1,0 +1,29 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../base
+
+namespace: production
+namePrefix: prod-
+
+commonLabels:
+  environment: production
+  tier: application
+
+patches:
+  # Upscale production instances to 3 replicas for high availability and low latency
+  - target:
+      kind: Deployment
+      name: alignops-backend
+    patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 3
+  - target:
+      kind: Deployment
+      name: alignops-frontend
+    patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 3
